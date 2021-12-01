@@ -96,9 +96,12 @@ static unsigned int default_above_hispeed_delay[] = {
 struct cpufreq_interactive_tunables {
 	int usage_count;
 	/* Hi speed to bump to from lo speed when load burst (default max) */
+#define DEFAULT_HISPEED_FREQ_HP (2208000)
+#define DEFAULT_HISPEED_FREQ_LP (1843200)
 	unsigned int hispeed_freq;
 	/* Go to hi speed when CPU load at or above this value. */
-#define DEFAULT_GO_HISPEED_LOAD 95
+#define DEFAULT_GO_HISPEED_LOAD_HP 90
+#define DEFAULT_GO_HISPEED_LOAD_LP 85
 	unsigned long go_hispeed_load;
 	/* Target load. Lower values result in higher CPU speeds. */
 	spinlock_t target_loads_lock;
@@ -1583,7 +1586,6 @@ static struct cpufreq_interactive_tunables *alloc_tunable(
 	tunables->above_hispeed_delay = default_above_hispeed_delay;
 	tunables->nabove_hispeed_delay =
 		ARRAY_SIZE(default_above_hispeed_delay);
-	tunables->go_hispeed_load = DEFAULT_GO_HISPEED_LOAD;
 	tunables->target_loads = default_target_loads;
 	tunables->ntarget_loads = ARRAY_SIZE(default_target_loads);
 	tunables->min_sample_time = DEFAULT_MIN_SAMPLE_TIME;
@@ -1591,6 +1593,14 @@ static struct cpufreq_interactive_tunables *alloc_tunable(
 	tunables->boostpulse_duration_val = 80 * USEC_PER_MSEC;
 	tunables->timer_slack_val = DEFAULT_TIMER_SLACK;
         tunables->io_is_busy = 1;
+
+        if (cpumask_test_cpu(policy->cpu, cpu_perf_mask)) {
+		tunables->go_hispeed_load = DEFAULT_GO_HISPEED_LOAD_HP;
+        }
+
+	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask)) {
+	        tunables->go_hispeed_load = DEFAULT_GO_HISPEED_LOAD_LP;
+        }
 
 	spin_lock_init(&tunables->target_loads_lock);
 	spin_lock_init(&tunables->above_hispeed_delay_lock);
@@ -1763,6 +1773,16 @@ static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 		freq_table = cpufreq_frequency_get_table(policy->cpu);
 		if (!tunables->hispeed_freq)
 			tunables->hispeed_freq = policy->max;
+
+	        if (cpumask_test_cpu(policy->cpu, cpu_perf_mask)) {
+		        tunables->hispeed_freq =
+				          DEFAULT_HISPEED_FREQ_HP;
+	        }
+
+	        if (cpumask_test_cpu(policy->cpu, cpu_lp_mask)) {
+		        tunables->hispeed_freq =
+				          DEFAULT_HISPEED_FREQ_LP;
+	        }
 
 		ppol = per_cpu(polinfo, policy->cpu);
 		ppol->policy = policy;
