@@ -8,7 +8,7 @@
 KERNEL_DIR="$(pwd)"
 
 # Zip Name
-ZIPNAME="Xtreme-EAS-X1"
+ZIPNAME="aRise-Xtreme-EAS-X3"
 
 # Specify compiler ( eva , azure , proton , arter , aosp & nexus )
 COMPILER=azure
@@ -49,7 +49,7 @@ DATE=$(TZ=Asia/Kolkata date +"%Y%m%d-%T")
 START=$(date +"%s")
 TANGGAL=$(date +"%F%S")
 
-FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-KERNEL-BETA-${TANGGAL}.zip
+FINAL_ZIP=${ZIPNAME}-${VERSION}-beta-${DEVICE}-${DRONE_BUILD_NUMBER}.zip
 ##----------------------------------------------------------##
 
 # Cloning Dependencies
@@ -99,7 +99,7 @@ function exports() {
     fi
     export ARCH=arm64
     export SUBARCH=arm64
-    export LOCALVERSION="-${ZIPNAME}-${VERSION}"
+    export LOCALVERSION="-${ZIPNAME}-${VERSION}-${DRONE_BUILD_NUMBER}"
     export KBUILD_BUILD_HOST=ArchLinux
     export KBUILD_BUILD_USER="ImSpiDy"
     export KBUILD_BUILD_VERSION=$DRONE_BUILD_NUMBER
@@ -133,7 +133,7 @@ function push() {
 ##----------------------------------------------------------##
 
 function compile() {
-	post_msg "<b>$KBUILD_BUILD_VERSION CI Build Triggered</b>%0A<b>Kernel Version : </b><code>$KERVER</code>%0A<b>Date : </b><code>$(TZ=Asia/Kolkata date)</code>%0A<b>Device : </b><code>$MODEL [$DEVICE]</code>%0A<b>Pipeline Host : </b><code>$KBUILD_BUILD_HOST</code>%0A<b>Host Core Count : </b><code>$PROCS</code>%0A<b>Compiler Used : </b><code>$KBUILD_COMPILER_STRING</code>%0A<b>Branch : </b><code>$CI_BRANCH</code>%0A<b>Top Commit : </b><a href='$DRONE_COMMIT_LINK'>$COMMIT_HEAD</a>"
+	post_msg "<b>$KBUILD_BUILD_VERSION CI Build Triggered</b>%0A<b>Date : </b><code>$(TZ=Asia/Kolkata date)</code>%0A<b>Device : </b><code>$MODEL [$DEVICE]</code>%0A<b>Host Core Count : </b><code>$PROCS</code>%0A<b>Compiler : </b><code>$KBUILD_COMPILER_STRING</code>%0A<b>Branch : </b><code>$CI_BRANCH</code>%0A<b>Top Commit : </b><a href='$DRONE_COMMIT_LINK'>$COMMIT_HEAD</a>"
 	                        make O=out ARCH=arm64 ${DEFCONFIG}
 	                        if [ -d ${KERNEL_DIR}/clang ]; then
 	                        make -kj$(nproc --all) O=out \
