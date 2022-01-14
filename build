@@ -99,7 +99,6 @@ function exports() {
     fi
     export ARCH=arm64
     export SUBARCH=arm64
-    export LOCALVERSION="-${ZIPNAME}-${VERSION}-${DRONE_BUILD_NUMBER}"
     export KBUILD_BUILD_HOST=ArchLinux
     export KBUILD_BUILD_USER="ImSpiDy"
     export KBUILD_BUILD_VERSION=$DRONE_BUILD_NUMBER
@@ -133,7 +132,14 @@ function push() {
 ##----------------------------------------------------------##
 
 function compile() {
-	post_msg "<b>$KBUILD_BUILD_VERSION CI Build Triggered</b>%0A<b>Date : </b><code>$(TZ=Asia/Kolkata date)</code>%0A<b>Device : </b><code>$MODEL [$DEVICE]</code>%0A<b>Host Core Count : </b><code>$PROCS</code>%0A<b>Compiler : </b><code>$KBUILD_COMPILER_STRING</code>%0A<b>Branch : </b><code>$CI_BRANCH</code>%0A<b>Top Commit : </b><a href='$DRONE_COMMIT_LINK'>$COMMIT_HEAD</a>"
+    if [ "$1" = "A" ]; then
+      post_msg "<b>$KBUILD_BUILD_VERSION CI Build Triggered</b>%0A<b>Date : </b><code>$(TZ=Asia/Kolkata date)</code>%0A<b>Device : </b><code>$MODEL [$DEVICE]</code>%0A<b>Host Core Count : </b><code>$PROCS</code>%0A<b>Compiler : </b><code>$KBUILD_COMPILER_STRING</code>%0A<b>Branch : </b><code>$CI_BRANCH</code>%0A<b>Top Commit : </b><a href='$DRONE_COMMIT_LINK'>$COMMIT_HEAD</a>"
+      export LOCALVERSION="-${ZIPNAME}-${VERSION}-12"
+    elif [ "$1" = "B" ]; then
+      export LOCALVERSION="-${ZIPNAME}-${VERSION}"
+      # drop bpf patches for a9/10/11
+      git apply disable_xt_qtaguid.p
+    fi
 	                        make O=out ARCH=arm64 ${DEFCONFIG}
 	                        if [ -d ${KERNEL_DIR}/clang ]; then
 	                        make -kj$(nproc --all) O=out \
@@ -186,7 +192,11 @@ function compile() {
         exit 1
     fi
     # Copy Files To AnyKernel3 Zip
-    cp $IMAGE AnyKernel3
+    if [ $1 = "A" ]; then
+      cp $IMAGE AnyKernel3/image_a
+    elif [ $1 = "B" ]; then
+      cp $IMAGE AnyKernel3/image_b
+    fi
 }
 ##----------------------------------------------------------##
 
@@ -201,7 +211,8 @@ function zipping() {
 
 clone
 exports
-compile
+compile A  # for a12 build
+compile B  # for a11/10/9 build
 END=$(date +"%s")
 DIFF=$(($END - $START))
 zipping
