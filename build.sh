@@ -8,7 +8,7 @@
 KERNEL_DIR="$(pwd)"
 
 # Zip Name
-ZIPNAME="Nexus-Xtreme-EAS"
+ZIPNAME="Nexus-Xtreme-EAS-QTI"
 
 # Specify compiler ( eva , azure , proton , arter , aosp , atom x & nexus )
 COMPILER=azure
